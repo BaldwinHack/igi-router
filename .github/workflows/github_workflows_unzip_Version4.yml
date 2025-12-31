@@ -1,0 +1,48 @@
+name: Extract Existing ZIPs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (with LFS)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Install unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Show files (root)
+        run: ls -la || true
+
+      - name: Find & extract ZIPs (recursive)
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob dotglob
+          zips=(**/*.zip)
+          if [ ${#zips[@]} -eq 0 ]; then
+            echo "No .zip files found"
+            exit 0
+          fi
+          for z in "${zips[@]}"; do
+            echo "Extracting $z into $(dirname "$z")"
+            unzip -o "$z" -d "$(dirname "$z")"
+          done
+
+      - name: Remove ZIP files (recursive)
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          for z in **/*.zip; do
+            [ -e "$z" ] && rm -f "$z"
+          done
+
+      - name: Commit extracted files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Extract ZIP files"
