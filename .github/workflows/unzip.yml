@@ -1,0 +1,43 @@
+name: Extract Uploaded ZIPs
+
+on:
+  push:
+    paths:
+      - "*.zip"
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: List files
+        run: ls -la
+
+      - name: Unzip all ZIP files
+        run: |
+          for z in *.zip; do
+            echo "Extracting $z"
+            unzip -o "$z"
+          done
+
+      - name: Remove ZIP files
+        run: rm -f *.zip
+
+      - name: Normalize structure (flatten if needed)
+        run: |
+          if [ -d "IGI-Starter-v4" ]; then
+            mv IGI-Starter-v4/* .
+            rm -rf IGI-Starter-v4
+          fi
+          if [ -d "IGI-Starter" ]; then
+            mv IGI-Starter/* .
+            rm -rf IGI-Starter
+          fi
+
+      - name: Commit extracted files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Extract starter ZIP(s)"
