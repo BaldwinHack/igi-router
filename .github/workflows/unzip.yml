@@ -1,0 +1,37 @@
+name: Extract Existing ZIPs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show files
+        run: ls -la
+
+      - name: Unzip starter ZIPs
+        run: |
+          for z in *.zip; do
+            echo "Extracting $z"
+            unzip -o "$z"
+          done
+
+      - name: Flatten directories
+        run: |
+          for d in IGI-Starter IGI-Starter-Final IGI-Starter-v4; do
+            if [ -d "$d" ]; then
+              mv "$d"/* .
+              rm -rf "$d"
+            fi
+          done
+
+      - name: Remove ZIP files
+        run: rm -f *.zip
+
+      - name: Commit extracted files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Extract IGI starter ZIPs"
